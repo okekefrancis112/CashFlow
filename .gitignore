@@ -1,20 +1,50 @@
+# Dependencies
+node_modules/
 
+# Build output
+dist/
+out/
+.next/
+.cache/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+
+# Network settings (contain mnemonics)
 **/settings/Mainnet.toml
 **/settings/Testnet.toml
-.cache/**
-history.txt
 
-logs
+# Clarinet artifacts
+history.txt
+costs-reports.json
+coverage/
+*.info
+
+# Logs
+logs/
 *.log
 npm-debug.log*
-coverage
-*.info
-costs-reports.json
-node_modules
-.next
-out
-dist
-*.claude
-*CLAUDE.md
-*.env
-*.playwright-mcp
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Playwright MCP debug artifacts
+.playwright-mcp/
+
+# Claude Code internal
+.claude/
+CLAUDE.md
+.claudeignore
+
+# Submission notes (local only)
+BUIDL-SUBMISSION.md

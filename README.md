@@ -20,7 +20,7 @@ Premium yield intelligence — forecasts, strategy signals, and portfolio analyt
 - **x402 Micropayments** — Premium API endpoints gated by HTTP 402 payments, no API keys or subscriptions
 - **On-Chain Strategy Management** — Basis-point allocation system with AI agent authorization for autonomous rebalancing
 - **Real Wallet Integration** — Connect Hiro/Leather wallet via @stacks/connect for deposits and withdrawals
-- **62 Smart Contract Tests** — Full coverage across 5 test suites with Clarinet SDK
+- **117 Smart Contract Tests** — Full coverage across 7 test suites with Clarinet SDK
 
 ---
 
@@ -114,7 +114,7 @@ Pay-per-request endpoints powered by the [x402 HTTP payment protocol](https://ww
 | **Smart Contracts** | Clarity 3 on Stacks L2 (Epoch 3.2) |
 | **Backend** | Node.js, Express, TypeScript, OpenAI GPT-4o-mini, @x402/express, Pino logging, Zod validation |
 | **Frontend** | React 19, Vite 7, Tailwind CSS v4, recharts, @stacks/connect, react-router-dom |
-| **Testing** | Vitest + Clarinet SDK (62 tests across 5 files) |
+| **Testing** | Vitest + Clarinet SDK (117 tests across 7 files) |
 | **Tokens** | sBTC, USDCx (Circle xReserve), STX, cfYIELD (vault shares) |
 
 ---
@@ -217,14 +217,22 @@ See [.env.example](.env.example) for the complete reference. Summary:
 cashFlow/
 ├── contracts/                        # Clarity 3 smart contracts
 │   ├── vault-core.clar              # Core vault: deposit, withdraw, rebalance
+│   ├── vault-core-v2.clar           # V2: NAV-based accounting, slippage, timelocks
 │   ├── strategy-router.clar         # Strategy allocation management
 │   ├── yield-token.clar             # SIP-010 share token (cfYIELD)
-│   └── fee-collector.clar           # Performance fee collection
-├── tests/                           # Vitest + Clarinet SDK (62 tests)
-│   ├── vault-core.test.ts           # 16 tests
-│   ├── strategy-router.test.ts      # 15 tests
+│   ├── yield-token-v2.clar          # V2: advanced token with yield/loss reporting
+│   ├── fee-collector.clar           # Performance fee collection
+│   ├── sbtc-token.clar              # sBTC mock token for testing
+│   ├── sbtc-swap.clar               # sBTC swap contract
+│   ├── traits/                      # SIP-010 trait definitions
+│   └── adapters/                    # Protocol adapters (Zest, StackingDAO)
+├── tests/                           # Vitest + Clarinet SDK (117 tests)
+│   ├── vault-core.test.ts           # 29 tests
+│   ├── vault-core-v2.test.ts        # 30 tests
+│   ├── strategy-router.test.ts      # 18 tests
 │   ├── yield-token.test.ts          # 11 tests
 │   ├── fee-collector.test.ts        # 14 tests
+│   ├── adapters/adapters.test.ts    # 9 tests
 │   └── integration.test.ts          # 6 end-to-end tests
 ├── backend/
 │   └── src/
@@ -288,7 +296,7 @@ cashFlow/
 
 ## Testing
 
-62 tests across 5 files, all using Vitest with the Clarinet SDK simnet environment.
+117 tests across 7 files, all using Vitest with the Clarinet SDK simnet environment.
 
 ```bash
 npm test              # Run all tests
@@ -300,12 +308,14 @@ npm run test:watch    # Watch mode
 
 | File | Tests | Coverage |
 |------|-------|----------|
-| `vault-core.test.ts` | 16 | Deposit, withdraw, emergency withdraw, pause, whitelist, rebalance target validation |
-| `strategy-router.test.ts` | 15 | Add/update strategies, deactivate/activate, AI agent auth, allocation overflow |
+| `vault-core.test.ts` | 29 | Deposit, withdraw, emergency withdraw, pause, whitelist, rebalance target validation |
+| `vault-core-v2.test.ts` | 30 | NAV-based accounting, slippage protection, deposit caps, timelocks |
+| `strategy-router.test.ts` | 18 | Add/update strategies, deactivate/activate, AI agent auth, allocation overflow |
 | `yield-token.test.ts` | 11 | SIP-010 transfer, mint/burn auth, minter management, supply tracking |
 | `fee-collector.test.ts` | 14 | STX + token fee collection, withdrawal auth, fee precision, percentage updates |
+| `adapters.test.ts` | 9 | Zest and StackingDAO adapter integration tests |
 | `integration.test.ts` | 6 | Full deposit-withdraw lifecycle, multi-user isolation, cross-contract flows |
-| **Total** | **62** | |
+| **Total** | **117** | |
 
 Each `it()` block gets fresh simnet state — tests are fully self-contained.
 
