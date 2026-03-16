@@ -1,0 +1,74 @@
+[project]
+name = 'cashFlow-contracts'
+description = ''
+authors = []
+telemetry = true
+cache_dir = './.cache'
+requirements = []
+[contracts.sbtc-token]
+path = 'contracts/sbtc-token.clar'
+clarity_version = 3
+epoch = '3.2'
+
+[contracts.sbtc-swap]
+path = 'contracts/sbtc-swap.clar'
+clarity_version = 3
+epoch = '3.2'
+
+[contracts.fee-collector]
+path = 'contracts/fee-collector.clar'
+clarity_version = 3
+epoch = 'latest'
+
+[contracts.strategy-router]
+path = 'contracts/strategy-router.clar'
+clarity_version = 3
+epoch = '3.2'
+
+[contracts.vault-core]
+path = 'contracts/vault-core.clar'
+clarity_version = 3
+epoch = '3.2'
+
+[contracts.yield-token]
+path = 'contracts/yield-token.clar'
+clarity_version = 3
+epoch = '3.2'
+
+[contracts.vault-core-v2]
+path = 'contracts/vault-core-v2.clar'
+clarity_version = 3
+epoch = '3.2'
+
+[contracts.yield-token-v2]
+path = 'contracts/yield-token-v2.clar'
+clarity_version = 3
+epoch = '3.2'
+
+[contracts.adapter-trait]
+path = 'contracts/traits/adapter-trait.clar'
+clarity_version = 3
+epoch = '3.2'
+
+[contracts.zest-adapter]
+path = 'contracts/adapters/zest-adapter.clar'
+clarity_version = 3
+epoch = '3.2'
+
+[contracts.stackingdao-adapter]
+path = 'contracts/adapters/stackingdao-adapter.clar'
+clarity_version = 3
+epoch = '3.2'
+
+[repl.analysis]
+passes = ['check_checker']
+
+[repl.analysis.check_checker]
+strict = false
+trusted_sender = false
+trusted_caller = false
+callee_filter = false
+
+[repl.remote_data]
+enabled = false
+api_url = 'https://api.hiro.so'

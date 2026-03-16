@@ -1,0 +1,88 @@
+---
+id: 0
+name: Testnet deployment
+network: testnet
+stacks-node: "https://api.testnet.hiro.so"
+bitcoin-node: "http://blockstack:blockstacksystem@bitcoind.testnet.stacks.co:18332"
+plan:
+  batches:
+    - id: 0
+      transactions:
+        - contract-publish:
+            contract-name: adapter-trait
+            expected-sender: ST2211JFW8MMPR3ZKDH4303QMZ5WCHZ2NFG1W53YD
+            cost: 289439
+            path: contracts/traits/adapter-trait.clar
+            anchor-block-only: true
+            clarity-version: 3
+        - contract-publish:
+            contract-name: fee-collector
+            expected-sender: ST2211JFW8MMPR3ZKDH4303QMZ5WCHZ2NFG1W53YD
+            cost: 290576
+            path: contracts/fee-collector.clar
+            anchor-block-only: true
+            clarity-version: 3
+        - contract-publish:
+            contract-name: sbtc-token
+            expected-sender: ST2211JFW8MMPR3ZKDH4303QMZ5WCHZ2NFG1W53YD
+            cost: 289723
+            path: contracts/sbtc-token.clar
+            anchor-block-only: true
+            clarity-version: 3
+        - contract-publish:
+            contract-name: sbtc-swap
+            expected-sender: ST2211JFW8MMPR3ZKDH4303QMZ5WCHZ2NFG1W53YD
+            cost: 289723
+            path: contracts/sbtc-swap.clar
+            anchor-block-only: true
+            clarity-version: 3
+        - contract-publish:
+            contract-name: stackingdao-adapter
+            expected-sender: ST2211JFW8MMPR3ZKDH4303QMZ5WCHZ2NFG1W53YD
+            cost: 289913
+            path: contracts/adapters/stackingdao-adapter.clar
+            anchor-block-only: true
+            clarity-version: 3
+        - contract-publish:
+            contract-name: strategy-router
+            expected-sender: ST2211JFW8MMPR3ZKDH4303QMZ5WCHZ2NFG1W53YD
+            cost: 290671
+            path: contracts/strategy-router.clar
+            anchor-block-only: true
+            clarity-version: 3
+        - contract-publish:
+            contract-name: yield-token
+            expected-sender: ST2211JFW8MMPR3ZKDH4303QMZ5WCHZ2NFG1W53YD
+            cost: 290007
+            path: contracts/yield-token.clar
+            anchor-block-only: true
+            clarity-version: 3
+        - contract-publish:
+            contract-name: vault-core
+            expected-sender: ST2211JFW8MMPR3ZKDH4303QMZ5WCHZ2NFG1W53YD
+            cost: 291997
+            path: contracts/vault-core.clar
+            anchor-block-only: true
+            clarity-version: 3
+        - contract-publish:
+            contract-name: yield-token-v2
+            expected-sender: ST2211JFW8MMPR3ZKDH4303QMZ5WCHZ2NFG1W53YD
+            cost: 290055
+            path: contracts/yield-token-v2.clar
+            anchor-block-only: true
+            clarity-version: 3
+        - contract-publish:
+            contract-name: vault-core-v2
+            expected-sender: ST2211JFW8MMPR3ZKDH4303QMZ5WCHZ2NFG1W53YD
+            cost: 293939
+            path: contracts/vault-core-v2.clar
+            anchor-block-only: true
+            clarity-version: 3
+        - contract-publish:
+            contract-name: zest-adapter
+            expected-sender: ST2211JFW8MMPR3ZKDH4303QMZ5WCHZ2NFG1W53YD
+            cost: 289913
+            path: contracts/adapters/zest-adapter.clar
+            anchor-block-only: true
+            clarity-version: 3
+      epoch: "3.2"
