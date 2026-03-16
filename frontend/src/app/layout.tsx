@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "CashFlow - AI-Powered sBTC Yield Aggregator",
   description:
     "AI-powered yield aggregator that allocates your sBTC across Stacks DeFi protocols for optimal risk-adjusted returns.",
-  icons: { icon: "/favicon.svg" },
+  icons: { icon: "/logo.png" },
 };
 
 export default function RootLayout({

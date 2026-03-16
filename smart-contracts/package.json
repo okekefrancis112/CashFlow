@@ -1,7 +1,7 @@
 {
-  "name": "cashFlow-contracts-tests",
+  "name": "cashflow-smart-contracts",
   "version": "1.0.0",
-  "description": "Run unit tests on this project.",
+  "description": "CashFlow Clarity smart contracts",
   "type": "module",
   "private": true,
   "scripts": {
