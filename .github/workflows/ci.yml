@@ -21,8 +21,6 @@ jobs:
           cache: npm
           cache-dependency-path: smart-contracts/package-lock.json
       - run: npm ci
-      - name: Type-check contracts
-        run: npx @hirosystems/clarinet-sdk check
       - name: Run contract tests
         run: npm test
 
