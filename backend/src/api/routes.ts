@@ -32,8 +32,8 @@ router.get("/health", async (_req: Request, res: Response) => {
   try {
     const stacksUrl =
       config.stacksNetwork === "mainnet"
-        ? "https://stacks-node-api.mainnet.stacks.co/v2/info"
-        : "https://stacks-node-api.testnet.stacks.co/v2/info";
+        ? "https://api.mainnet.hiro.so/v2/info"
+        : "https://api.testnet.hiro.so/v2/info";
     await axios.get(stacksUrl, { timeout: 5000 });
     checks.stacks = "ok";
   } catch {
