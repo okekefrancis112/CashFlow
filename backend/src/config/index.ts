@@ -39,6 +39,12 @@ export const config = {
     process.env.PAYMENT_ADDRESS ||
     "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM",
   port: parseInt(process.env.PORT || "4000", 10),
+  nodeEnv: process.env.NODE_ENV || "development",
+
+  // CORS: comma-separated origins or defaults to localhost
+  allowedOrigins: process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+    : ([/^http:\/\/localhost:\d+$/] as (string | RegExp)[]),
 
   // Contract addresses (update after deployment)
   contracts: {

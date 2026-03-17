@@ -10,6 +10,9 @@ const TOKEN_CONTRACTS: Record<string, string> = {
   USDCx: "usdcx-token",
 };
 
+// Validate Stacks address format (ST for testnet, SP for mainnet)
+const STACKS_ADDRESS_RE = /^S[PT][A-Z0-9]{38,128}$/;
+
 function fullTokenPrincipal(tokenName: string): string {
   return `${config.walletAddress}.${tokenName}`;
 }
@@ -17,6 +20,11 @@ function fullTokenPrincipal(tokenName: string): string {
 // GET /user/:address/deposits
 router.get("/:address/deposits", async (req: Request, res: Response) => {
   const { address } = req.params;
+
+  if (!STACKS_ADDRESS_RE.test(address)) {
+    res.status(400).json(errorResponse("Invalid Stacks address format", 400));
+    return;
+  }
 
   try {
     const deposits: Record<string, number> = {};
@@ -40,6 +48,11 @@ router.get("/:address/deposits", async (req: Request, res: Response) => {
 // GET /user/:address/shares
 router.get("/:address/shares", async (req: Request, res: Response) => {
   const { address } = req.params;
+
+  if (!STACKS_ADDRESS_RE.test(address)) {
+    res.status(400).json(errorResponse("Invalid Stacks address format", 400));
+    return;
+  }
 
   try {
     const [result, sharePrice] = await Promise.all([

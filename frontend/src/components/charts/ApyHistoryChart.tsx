@@ -44,6 +44,8 @@ export function ApyHistoryChart({ data }: ApyHistoryChartProps) {
             width={45}
           />
           <Tooltip
+            cursor={{ fill: "rgba(37, 99, 235, 0.08)" }}
+            wrapperStyle={{ background: "none", border: "none", boxShadow: "none", padding: 0 }}
             content={({ active, payload, label }) => {
               if (!active || !payload?.[0]) return null;
               return (

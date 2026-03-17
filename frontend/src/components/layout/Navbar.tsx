@@ -12,6 +12,7 @@ const NAV_LINKS = [
   { to: "/dashboard", label: "Dashboard" },
   { to: "/yields", label: "Yields" },
   { to: "/analytics", label: "Analytics" },
+  { to: "/premium", label: "AI API" },
 ];
 
 interface NavbarProps {

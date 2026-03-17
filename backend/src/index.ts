@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 import pinoHttp from "pino-http";
 import { config } from "./config";
 import { logger } from "./lib/logger";
@@ -10,12 +11,29 @@ import { globalLimiter } from "./middleware/rate-limiter";
 
 const app = express();
 
+// ---------- Security headers ----------
+app.use(helmet());
+app.disable("x-powered-by");
+
 // ---------- Structured logging ----------
 app.use(pinoHttp({ logger }));
 
 // ---------- CORS lockdown ----------
-app.use(cors({ origin: /^http:\/\/localhost:\d+$/ }));
-app.use(express.json());
+const allowedOrigins = config.allowedOrigins;
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (curl, server-to-server)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.some((o) => origin === o || o instanceof RegExp && o.test(origin))) {
+        return callback(null, true);
+      }
+      callback(new Error("CORS: origin not allowed"));
+    },
+    credentials: true,
+  })
+);
+app.use(express.json({ limit: "1mb" }));
 
 // ---------- Global rate limiter ----------
 app.use(globalLimiter);
@@ -24,11 +42,10 @@ app.use(globalLimiter);
 app.use("/api", routes);
 app.use("/api/user", userRoutes);
 
-// Root route
+// Root route — no internal config disclosure
 app.get("/", (_req, res) => {
   res.json({
     name: "CashFlow API",
-    description: "AI-powered sBTC yield aggregator with x402 payment integration",
     version: "1.0.0",
     docs: {
       public: [
@@ -36,16 +53,13 @@ app.get("/", (_req, res) => {
         "GET /api/yields",
         "GET /api/vault/stats",
         "GET /api/strategy/current",
-        "GET /api/user/:address/deposits",
-        "GET /api/user/:address/shares",
       ],
       premium: [
-        "GET /api/premium/yield-forecast (0.1 STX via x402)",
-        "GET /api/premium/strategy-signals (0.15 STX via x402)",
-        "GET /api/premium/portfolio-analytics (0.2 STX via x402)",
+        "GET /api/premium/yield-forecast",
+        "GET /api/premium/strategy-signals",
+        "GET /api/premium/portfolio-analytics",
       ],
     },
-    network: config.stacksNetwork,
   });
 });
 

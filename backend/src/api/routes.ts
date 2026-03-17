@@ -1,11 +1,9 @@
 import { Router, Request, Response } from "express";
-import { paymentMiddlewareFromConfig } from "@x402/express";
-import { HTTPFacilitatorClient } from "@x402/core/server";
 import axios from "axios";
 import { config } from "../config";
 import { logger } from "../lib/logger";
 import { successResponse, errorResponse } from "../lib/response";
-import { premiumLimiter, aiLimiter } from "../middleware/rate-limiter";
+import { aiLimiter } from "../middleware/rate-limiter";
 import {
   fetchYieldSources,
   getCurrentAllocations,
@@ -22,57 +20,6 @@ import { analyzeYields, generateForecast } from "../agents/yield-optimizer";
 import { validateRiskParam } from "../middleware/validation";
 
 const router = Router();
-
-// ============================================================
-// x402 PAYMENT MIDDLEWARE
-// ============================================================
-
-const premiumRoutes = {
-  "GET /premium/yield-forecast": {
-    accepts: {
-      scheme: "exact",
-      payTo: config.paymentAddress,
-      price: 0.1,
-      network: "stacks:testnet" as const,
-    },
-    description: "AI yield forecast for next 7 days",
-  },
-  "GET /premium/strategy-signals": {
-    accepts: {
-      scheme: "exact",
-      payTo: config.paymentAddress,
-      price: 0.15,
-      network: "stacks:testnet" as const,
-    },
-    description: "Real-time optimal allocation signals with AI reasoning",
-  },
-  "GET /premium/portfolio-analytics": {
-    accepts: {
-      scheme: "exact",
-      payTo: config.paymentAddress,
-      price: 0.2,
-      network: "stacks:testnet" as const,
-    },
-    description: "Detailed historical performance analytics",
-  },
-};
-
-const facilitatorClient = new HTTPFacilitatorClient({
-  url: config.x402FacilitatorUrl,
-});
-
-// syncFacilitatorOnStart=false: defer initialization to first premium request
-// This prevents the server from crashing if the facilitator is unreachable at startup
-router.use(
-  paymentMiddlewareFromConfig(
-    premiumRoutes,
-    facilitatorClient,
-    undefined, // schemes
-    undefined, // paywallConfig
-    undefined, // paywall
-    false,     // syncFacilitatorOnStart - don't crash on startup
-  )
-);
 
 // ============================================================
 // PUBLIC ENDPOINTS
@@ -93,8 +40,8 @@ router.get("/health", async (_req: Request, res: Response) => {
     checks.stacks = "unreachable";
   }
 
-  // Check OpenAI key presence
-  checks.openai = config.openaiApiKey ? "ok" : "missing";
+  // Check OpenAI availability (don't disclose key presence)
+  checks.ai = config.openaiApiKey ? "ok" : "degraded";
 
   const values = Object.values(checks);
   const allOk = values.every((v) => v === "ok");
@@ -225,25 +172,19 @@ router.get("/strategy/current", async (_req: Request, res: Response) => {
 });
 
 // ============================================================
-// x402-PROTECTED PREMIUM ENDPOINTS
+// AI INTELLIGENCE ENDPOINTS
 // ============================================================
 
 // AI yield forecast for next 7 days
 router.get(
   "/premium/yield-forecast",
-  premiumLimiter,
   aiLimiter,
   async (_req: Request, res: Response) => {
     try {
       const sources = fetchYieldSources();
       const forecast = await generateForecast(sources);
 
-      res.json(
-        successResponse({
-          ...forecast,
-          paymentRequired: "0.1 STX via x402",
-        })
-      );
+      res.json(successResponse(forecast));
     } catch (error) {
       logger.error(error, "Failed to generate forecast");
       res.status(500).json(errorResponse("Failed to generate forecast", 500));
@@ -254,7 +195,6 @@ router.get(
 // Real-time optimal allocation signals with AI reasoning
 router.get(
   "/premium/strategy-signals",
-  premiumLimiter,
   aiLimiter,
   validateRiskParam,
   async (req: Request, res: Response) => {
@@ -265,12 +205,7 @@ router.get(
       const sources = fetchYieldSources();
       const optimization = await analyzeYields(sources, riskProfile);
 
-      res.json(
-        successResponse({
-          ...optimization,
-          paymentRequired: "0.15 STX via x402",
-        })
-      );
+      res.json(successResponse(optimization));
     } catch (error) {
       logger.error(error, "Failed to generate strategy signals");
       res.status(500).json(errorResponse("Failed to generate strategy signals", 500));
@@ -281,7 +216,7 @@ router.get(
 // Detailed historical performance analytics
 router.get(
   "/premium/portfolio-analytics",
-  premiumLimiter,
+  aiLimiter,
   async (_req: Request, res: Response) => {
     try {
       const allocations = getCurrentAllocations();
@@ -321,7 +256,6 @@ router.get(
             maxDrawdown: -3.2,
             volatility: 4.1,
           },
-          paymentRequired: "0.2 STX via x402",
         })
       );
     } catch (error) {

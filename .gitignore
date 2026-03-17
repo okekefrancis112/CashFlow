@@ -47,4 +47,8 @@ CLAUDE.md
 .claudeignore
 
 # Submission notes (local only)
-BUIDL-SUBMISSION.md
+*BUIDL-SUBMISSION.md
+BUIDL-SUBMISSION.html
+
+# Local Netlify folder
+.netlify

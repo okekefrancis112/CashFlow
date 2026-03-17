@@ -114,6 +114,26 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+/* ========= Recharts tooltip override ========= */
+.recharts-tooltip-wrapper {
+  background: none !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  outline: none !important;
+}
+
+.recharts-default-tooltip {
+  background: rgba(10, 10, 20, 0.85) !important;
+  background-color: rgba(10, 10, 20, 0.85) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(37, 99, 235, 0.3) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+  padding: 8px 12px !important;
+}
+
 /* ========= Glow effects ========= */
 
 .glow-navy {

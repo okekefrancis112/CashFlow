@@ -36,6 +36,8 @@ export function AllocationPieChart({ allocations = [] }: AllocationPieChartProps
             ))}
           </Pie>
           <Tooltip
+            cursor={{ fill: "rgba(37, 99, 235, 0.08)" }}
+            wrapperStyle={{ background: "none", border: "none", boxShadow: "none", padding: 0 }}
             content={({ active, payload }) => {
               if (!active || !payload?.[0]) return null;
               const d = payload[0].payload;
