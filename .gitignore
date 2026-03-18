@@ -22,6 +22,9 @@ costs-reports.json
 coverage/
 *.info
 
+# Database (JSON file store)
+backend/data/
+
 # Logs
 logs/
 *.log

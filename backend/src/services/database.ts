@@ -128,6 +128,12 @@ export function getTvlHistory(days = 30) {
   return data.tvlSnapshots.filter((s) => s.timestamp >= cutoff);
 }
 
+export function getApyHistory(days = 30) {
+  const data = loadDb();
+  const cutoff = new Date(Date.now() - days * 86400000).toISOString();
+  return data.apySnapshots.filter((s) => s.timestamp >= cutoff);
+}
+
 export function getHarvestHistory(limit = 50) {
   const data = loadDb();
   return data.harvestLogs.slice(-limit).reverse();
@@ -136,4 +142,25 @@ export function getHarvestHistory(limit = 50) {
 export function getRebalanceHistory(limit = 50) {
   const data = loadDb();
   return data.rebalanceLogs.slice(-limit).reverse();
+}
+
+export function getFeeHistory(limit = 50) {
+  const data = loadDb();
+  return data.feeLogs.slice(-limit).reverse();
+}
+
+export function getDbStats() {
+  const data = loadDb();
+  return {
+    tvlSnapshots: data.tvlSnapshots.length,
+    apySnapshots: data.apySnapshots.length,
+    harvestLogs: data.harvestLogs.length,
+    rebalanceLogs: data.rebalanceLogs.length,
+    feeLogs: data.feeLogs.length,
+  };
+}
+
+export function initDatabase() {
+  loadDb();
+  logger.info("Database service initialized");
 }

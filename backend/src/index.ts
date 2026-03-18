@@ -6,8 +6,13 @@ import { config } from "./config";
 import { logger } from "./lib/logger";
 import routes from "./api/routes";
 import userRoutes from "./api/user-routes";
+import automationRoutes from "./api/automation-routes";
 import { globalErrorHandler } from "./middleware/error-handler";
 import { globalLimiter } from "./middleware/rate-limiter";
+import { initDatabase } from "./services/database";
+import { startHarvester, stopHarvester } from "./services/harvester";
+import { startRebalancer, stopRebalancer } from "./services/rebalancer";
+import { startMonitor, stopMonitor } from "./services/monitor";
 
 const app = express();
 
@@ -41,6 +46,7 @@ app.use(globalLimiter);
 // Mount API routes
 app.use("/api", routes);
 app.use("/api/user", userRoutes);
+app.use("/api/automation", automationRoutes);
 
 // Root route — no internal config disclosure
 app.get("/", (_req, res) => {
@@ -59,6 +65,18 @@ app.get("/", (_req, res) => {
         "GET /api/premium/strategy-signals",
         "GET /api/premium/portfolio-analytics",
       ],
+      automation: [
+        "GET /api/automation/harvester/status",
+        "GET /api/automation/harvester/history",
+        "GET /api/automation/rebalancer/status",
+        "GET /api/automation/rebalancer/history",
+        "GET /api/automation/monitor/summary",
+        "GET /api/automation/monitor/alerts",
+        "GET /api/automation/history/tvl",
+        "GET /api/automation/history/apy",
+        "GET /api/automation/history/fees",
+        "GET /api/automation/stats",
+      ],
     },
   });
 });
@@ -66,15 +84,31 @@ app.get("/", (_req, res) => {
 // ---------- Global error handler (MUST be after all routes) ----------
 app.use(globalErrorHandler);
 
+// ---------- Initialize services ----------
+initDatabase();
+
 const server = app.listen(config.port, () => {
   logger.info(`CashFlow API running on http://localhost:${config.port}`);
   logger.info(`Network: ${config.stacksNetwork}`);
-  logger.info(`x402 Facilitator: ${config.x402FacilitatorUrl}`);
+  logger.info(`Mode: ${config.privateKey ? "production (on-chain)" : "simulation"}`);
+
+  // Start automation services after server is ready
+  startHarvester();
+  startRebalancer();
+  startMonitor();
+
+  logger.info("All automation services started");
 });
 
 // ---------- Graceful shutdown ----------
 function shutdown(signal: string) {
-  logger.info({ signal }, "Received shutdown signal, draining connections...");
+  logger.info({ signal }, "Received shutdown signal, stopping services...");
+
+  stopHarvester();
+  stopRebalancer();
+  stopMonitor();
+  logger.info("Automation services stopped");
+
   server.close(() => {
     logger.info("All connections drained. Exiting.");
     process.exit(0);
