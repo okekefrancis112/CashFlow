@@ -9,17 +9,17 @@ const PRODUCT_LINKS = [
 ];
 
 const RESOURCE_LINKS = [
-  { label: "Documentation", href: "#" },
-  { label: "Smart Contracts", href: "#" },
-  { label: "API Reference", href: "#" },
+  { label: "Smart Contracts", href: "https://github.com/okekefrancis112/cashFlow/tree/main/smart-contracts" },
+  { label: "API Reference", href: "/ai" },
+  { label: "Stacks Explorer", href: "https://explorer.hiro.so/?chain=testnet" },
 ];
 
 const TECH = ["Stacks L2", "sBTC", "Clarity", "x402"];
 
 const SOCIALS = [
-  { icon: Github, href: "#", label: "GitHub" },
-  { icon: Twitter, href: "#", label: "Twitter" },
-  { icon: Globe, href: "#", label: "Website" },
+  { icon: Github, href: "https://github.com/okekefrancis112/cashFlow", label: "GitHub" },
+  { icon: Twitter, href: "https://x.com/cashflow_stx", label: "Twitter" },
+  { icon: Globe, href: "https://dorahacks.io", label: "DoraHacks" },
 ];
 
 export function Footer() {
@@ -36,7 +36,7 @@ export function Footer() {
               <span className="text-sm font-semibold text-white">CashFlow</span>
             </div>
             <p className="text-xs text-[#565a6e] max-w-[280px] leading-relaxed">
-              AI-powered yield aggregator for Bitcoin DeFi on Stacks. Maximize returns with intelligent allocation.
+              The first AI-powered sBTC &amp; USDCx yield aggregator on Stacks. One deposit across Zest, Bitflow, StackingDAO &amp; Hermetica.
             </p>
             {/* Social icons */}
             <div className="flex items-center gap-3 pt-1">

@@ -5,14 +5,14 @@ const CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ||
   "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM";
 
-export function useSwap() {
+export function useUsdcxFaucet() {
   const { execute, txId, txState, error, reset } = useContractCall();
 
-  const swap = useCallback(
+  const claimUsdcx = useCallback(
     async () => {
       await execute({
         contractAddress: CONTRACT_ADDRESS,
-        contractName: "sbtc-token",
+        contractName: "usdcx-token",
         functionName: "faucet",
         functionArgs: [],
       });
@@ -20,5 +20,5 @@ export function useSwap() {
     [execute]
   );
 
-  return { swap, txId, txState, error, reset };
+  return { claimUsdcx, txId, txState, error, reset };
 }

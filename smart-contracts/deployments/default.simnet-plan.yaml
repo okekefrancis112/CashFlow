@@ -69,9 +69,19 @@ plan:
             path: contracts/traits/adapter-trait.clar
             clarity-version: 3
         - emulated-contract-publish:
+            contract-name: bitflow-adapter
+            emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+            path: contracts/adapters/bitflow-adapter.clar
+            clarity-version: 3
+        - emulated-contract-publish:
             contract-name: fee-collector
             emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
             path: contracts/fee-collector.clar
+            clarity-version: 3
+        - emulated-contract-publish:
+            contract-name: hermetica-adapter
+            emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+            path: contracts/adapters/hermetica-adapter.clar
             clarity-version: 3
         - emulated-contract-publish:
             contract-name: sbtc-token
@@ -92,6 +102,11 @@ plan:
             contract-name: strategy-router
             emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
             path: contracts/strategy-router.clar
+            clarity-version: 3
+        - emulated-contract-publish:
+            contract-name: usdcx-token
+            emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+            path: contracts/usdcx-token.clar
             clarity-version: 3
         - emulated-contract-publish:
             contract-name: yield-token

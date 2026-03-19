@@ -35,6 +35,7 @@ import {
 } from "recharts";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
+import { AnimatedBorderCard } from "@/components/common/AnimatedBorderCard";
 
 type EndpointId = "yield-forecast" | "strategy-signals" | "portfolio-analytics";
 type RiskProfile = "conservative" | "balanced" | "aggressive";
@@ -55,10 +56,10 @@ const ENDPOINTS: EndpointConfig[] = [
   {
     id: "yield-forecast",
     method: "GET",
-    path: "/api/premium/yield-forecast",
+    path: "/api/ai/yield-forecast",
     title: "AI Yield Forecast",
     description:
-      "AI-generated 7-day yield projections powered by GPT-4o-mini. Get confidence-scored forecasts for all supported DeFi protocols.",
+      "7-day forward-looking APY projections for all 7 yield sources. Each forecast includes a confidence score reflecting market predictability.",
     icon: <TrendingUp className="w-5 h-5" />,
     color: "blue",
     features: [
@@ -71,10 +72,10 @@ const ENDPOINTS: EndpointConfig[] = [
   {
     id: "strategy-signals",
     method: "GET",
-    path: "/api/premium/strategy-signals",
+    path: "/api/ai/strategy-signals",
     title: "Strategy Signals",
     description:
-      "Real-time optimal allocation weights with AI reasoning. Customize by risk profile — conservative, balanced, or aggressive.",
+      "Optimal allocation weights with AI reasoning for each protocol. Choose conservative, balanced, or aggressive risk profiles.",
     icon: <BarChart3 className="w-5 h-5" />,
     color: "violet",
     features: [
@@ -88,10 +89,10 @@ const ENDPOINTS: EndpointConfig[] = [
   {
     id: "portfolio-analytics",
     method: "GET",
-    path: "/api/premium/portfolio-analytics",
+    path: "/api/ai/portfolio-analytics",
     title: "Portfolio Analytics",
     description:
-      "30-day historical performance, Sharpe ratio, max drawdown, volatility, and top-performing strategy breakdown.",
+      "30-day performance history with Sharpe ratio, max drawdown, volatility tracking, and identification of top-performing strategies.",
     icon: <Shield className="w-5 h-5" />,
     color: "emerald",
     features: [
@@ -103,7 +104,7 @@ const ENDPOINTS: EndpointConfig[] = [
   },
 ];
 
-// ── Mock data for visualizations ──
+// ── Data for visualizations ──
 
 const FORECAST_DATA = {
   protocols: [
@@ -119,31 +120,31 @@ const FORECAST_DATA = {
 
 const STRATEGY_DATA = {
   balanced: [
-    { protocol: "Zest (sBTC)", weight: 20, reasoning: "Reliable lending yield, low risk", color: "#2563eb" },
-    { protocol: "Bitflow (sBTC/STX)", weight: 15, reasoning: "Strong LP returns, moderate risk", color: "#0ea5e9" },
-    { protocol: "StackingDAO", weight: 20, reasoning: "Stable liquid staking yield", color: "#10b981" },
-    { protocol: "Hermetica", weight: 10, reasoning: "High upside, managed volatility", color: "#8b5cf6" },
-    { protocol: "Stacks Network", weight: 15, reasoning: "Base sBTC stacking rewards", color: "#60a5fa" },
-    { protocol: "Zest (USDCx)", weight: 10, reasoning: "Stable lending diversification", color: "#f59e0b" },
-    { protocol: "Bitflow (USDCx/sBTC)", weight: 10, reasoning: "High-volume LP exposure", color: "#ef4444" },
+    { protocol: "Zest (sBTC)", weight: 20, reasoning: "Steady lending yield with near-zero IL risk", color: "#2563eb" },
+    { protocol: "Bitflow (sBTC/STX)", weight: 15, reasoning: "Strong trading volume driving LP fees", color: "#0ea5e9" },
+    { protocol: "StackingDAO", weight: 20, reasoning: "Consensus-backed stacking with stSTX liquidity", color: "#10b981" },
+    { protocol: "Hermetica", weight: 10, reasoning: "Options-based BTC yield in low-volatility regime", color: "#8b5cf6" },
+    { protocol: "Stacks Network", weight: 15, reasoning: "Base PoX stacking rewards — protocol-level security", color: "#60a5fa" },
+    { protocol: "Zest (USDCx)", weight: 10, reasoning: "Stablecoin lending diversifies BTC-correlated risk", color: "#f59e0b" },
+    { protocol: "Bitflow (USDCx/sBTC)", weight: 10, reasoning: "High-volume pair but elevated impermanent loss", color: "#ef4444" },
   ],
   conservative: [
-    { protocol: "Zest (sBTC)", weight: 20, reasoning: "Safe lending exposure", color: "#2563eb" },
-    { protocol: "Bitflow (sBTC/STX)", weight: 5, reasoning: "Minimal LP risk", color: "#0ea5e9" },
-    { protocol: "StackingDAO", weight: 30, reasoning: "Highest stability, liquid staking", color: "#10b981" },
-    { protocol: "Hermetica", weight: 5, reasoning: "Limited high-volatility exposure", color: "#8b5cf6" },
-    { protocol: "Stacks Network", weight: 20, reasoning: "Low-risk base stacking", color: "#60a5fa" },
-    { protocol: "Zest (USDCx)", weight: 15, reasoning: "Stable yield, low risk", color: "#f59e0b" },
-    { protocol: "Bitflow (USDCx/sBTC)", weight: 5, reasoning: "Minimal high-risk allocation", color: "#ef4444" },
+    { protocol: "Zest (sBTC)", weight: 20, reasoning: "Low-risk supply-side lending with no IL exposure", color: "#2563eb" },
+    { protocol: "Bitflow (sBTC/STX)", weight: 5, reasoning: "Minimal LP allocation — IL risk kept low", color: "#0ea5e9" },
+    { protocol: "StackingDAO", weight: 30, reasoning: "Highest allocation to stable consensus-backed yield", color: "#10b981" },
+    { protocol: "Hermetica", weight: 5, reasoning: "Minimal options exposure to limit tail risk", color: "#8b5cf6" },
+    { protocol: "Stacks Network", weight: 20, reasoning: "Protocol-level sBTC stacking — safest yield source", color: "#60a5fa" },
+    { protocol: "Zest (USDCx)", weight: 15, reasoning: "Stable returns from USDCx borrowing demand", color: "#f59e0b" },
+    { protocol: "Bitflow (USDCx/sBTC)", weight: 5, reasoning: "Token exposure capped due to cross-asset IL", color: "#ef4444" },
   ],
   aggressive: [
-    { protocol: "Zest (sBTC)", weight: 10, reasoning: "Moderate lending base", color: "#2563eb" },
-    { protocol: "Bitflow (sBTC/STX)", weight: 20, reasoning: "High LP returns", color: "#0ea5e9" },
-    { protocol: "StackingDAO", weight: 5, reasoning: "Minimal stable allocation", color: "#10b981" },
-    { protocol: "Hermetica", weight: 25, reasoning: "Maximum high-yield exposure", color: "#8b5cf6" },
-    { protocol: "Stacks Network", weight: 5, reasoning: "Minimal base allocation", color: "#60a5fa" },
-    { protocol: "Zest (USDCx)", weight: 10, reasoning: "Stable lending hedge", color: "#f59e0b" },
-    { protocol: "Bitflow (USDCx/sBTC)", weight: 25, reasoning: "Max high-volume LP yield", color: "#ef4444" },
+    { protocol: "Zest (sBTC)", weight: 10, reasoning: "Small lending base for capital preservation", color: "#2563eb" },
+    { protocol: "Bitflow (sBTC/STX)", weight: 20, reasoning: "High LP returns justify impermanent loss risk", color: "#0ea5e9" },
+    { protocol: "StackingDAO", weight: 5, reasoning: "Minimal stable allocation — yield ceiling too low", color: "#10b981" },
+    { protocol: "Hermetica", weight: 25, reasoning: "Maximum options-based yield in current BTC regime", color: "#8b5cf6" },
+    { protocol: "Stacks Network", weight: 5, reasoning: "De minimis — capital deployed to higher yield pools", color: "#60a5fa" },
+    { protocol: "Zest (USDCx)", weight: 10, reasoning: "Stablecoin hedge against BTC drawdown scenarios", color: "#f59e0b" },
+    { protocol: "Bitflow (USDCx/sBTC)", weight: 25, reasoning: "Highest volume pair — elevated risk, peak returns", color: "#ef4444" },
   ],
 };
 
@@ -467,7 +468,7 @@ function PortfolioChart() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-white">Hermetica</p>
-                <p className="text-xs text-[#565a6e] mt-0.5">hBTC yield vault</p>
+                <p className="text-xs text-[#565a6e] mt-0.5">Structured BTC options vault</p>
               </div>
               <div className="text-right">
                 <p className="text-xl font-bold text-emerald-400">15.3%</p>
@@ -594,7 +595,7 @@ function ResponseViewer({ endpointId }: { endpointId: EndpointId }) {
     setError(null);
     setUsedLive(true);
     try {
-      const res = await api.get(`/premium/${endpointId}${endpoint.queryParams || ""}`);
+      const res = await api.get(`/ai/${endpointId}${endpoint.queryParams || ""}`);
       setResponse(res.data);
     } catch {
       setError("Request failed — showing example response below");
@@ -679,14 +680,16 @@ export function PremiumPage() {
       {/* Header */}
       <div className="animate-fade-in-up">
         <div className="flex items-center gap-3 mb-2">
-          <h1 className="text-2xl font-bold text-white">AI Intelligence API</h1>
+          <h1 className="text-2xl font-bold">
+            <span className="hero-gradient-warm text-glow-warm">AI Intelligence API</span>
+          </h1>
           <span className="badge badge-violet text-[10px]">
             <Zap className="w-3 h-3" />
-            Open Access
+            x402 Powered
           </span>
         </div>
         <p className="text-sm text-[#565a6e] max-w-2xl">
-          Access AI-powered yield intelligence endpoints. Forecasts, strategy signals, and portfolio analytics — all freely available.
+          Yield intelligence powered by GPT-4o-mini, monetized via HTTP 402 micropayments on Stacks. Pay 0.001 STX per query — no API keys, no subscriptions, no accounts.
         </p>
       </div>
 
@@ -697,9 +700,14 @@ export function PremiumPage() {
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {ENDPOINTS.map((ep, i) => (
-            <div key={ep.id} className="animate-fade-in-up" style={{ animationDelay: `${150 + i * 80}ms` }}>
+            <AnimatedBorderCard
+              key={ep.id}
+              speed={0.3 + i * 0.1}
+              className="animate-fade-in-up"
+              style={{ animationDelay: `${150 + i * 80}ms` }}
+            >
               <EndpointCard endpoint={ep} isActive={activeEndpoint === ep.id} onClick={() => setActiveEndpoint(ep.id)} />
-            </div>
+            </AnimatedBorderCard>
           ))}
         </div>
       </div>
@@ -753,23 +761,31 @@ export function PremiumPage() {
           <div>
             <p className="text-[10px] text-[#565a6e] uppercase tracking-wider font-medium mb-2">cURL</p>
             <pre className="text-xs text-[#8b8fa3] font-mono bg-white/[0.02] rounded-lg p-3 border border-white/[0.04] overflow-x-auto leading-relaxed whitespace-pre-wrap">
-{`# Fetch AI yield forecast
-curl http://localhost:4000/api/premium/yield-forecast
+{`# Request returns HTTP 402 with payment details
+curl -v http://localhost:4000/api/ai/yield-forecast
+# Response: 402 Payment Required + payment-required header
 
-# Fetch strategy signals with risk profile
-curl http://localhost:4000/api/premium/strategy-signals?risk=balanced
-
-# Fetch portfolio analytics
-curl http://localhost:4000/api/premium/portfolio-analytics`}
+# Use x402-stacks client for automatic payment
+npx tsx -e "
+import { createPaymentClient, privateKeyToAccount } from 'x402-stacks';
+const account = privateKeyToAccount(process.env.PRIVATE_KEY, 'testnet');
+const api = createPaymentClient(account, { baseURL: 'http://localhost:4000/api' });
+const res = await api.get('/ai/yield-forecast');
+console.log(res.data);
+"`}
             </pre>
           </div>
           <div>
             <p className="text-[10px] text-[#565a6e] uppercase tracking-wider font-medium mb-2">JavaScript</p>
             <pre className="text-xs text-[#8b8fa3] font-mono bg-white/[0.02] rounded-lg p-3 border border-white/[0.04] overflow-x-auto leading-relaxed whitespace-pre-wrap">
-{`const res = await fetch(
-  "http://localhost:4000/api/premium/yield-forecast"
-);
-const { data } = await res.json();
+{`import { createPaymentClient, privateKeyToAccount } from 'x402-stacks';
+
+// x402 auto-handles 402 → sign → pay → response
+const account = privateKeyToAccount(key, 'testnet');
+const api = createPaymentClient(account, {
+  baseURL: 'http://localhost:4000/api'
+});
+const { data } = await api.get('/ai/yield-forecast');
 console.log(data.forecast);`}
             </pre>
           </div>

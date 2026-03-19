@@ -14,11 +14,21 @@ export function getNetwork() {
     : new StacksTestnet();
 }
 
+// Simple in-memory cache to avoid hammering Hiro API on concurrent requests
+const readCache = new Map<string, { data: unknown; expiry: number }>();
+const CACHE_TTL_MS = 10_000; // 10 seconds
+
 export async function callReadOnly(
   contractName: string,
   functionName: string,
   args: ClarityValue[] = []
 ) {
+  const cacheKey = `${contractName}:${functionName}:${JSON.stringify(args.map(a => a.type + String(a)))}`;
+  const cached = readCache.get(cacheKey);
+  if (cached && cached.expiry > Date.now()) {
+    return cached.data;
+  }
+
   const result = await callReadOnlyFunction({
     contractAddress: config.walletAddress,
     contractName,
@@ -27,7 +37,9 @@ export async function callReadOnly(
     network: getNetwork(),
     senderAddress: config.walletAddress,
   });
-  return cvToJSON(result);
+  const json = cvToJSON(result);
+  readCache.set(cacheKey, { data: json, expiry: Date.now() + CACHE_TTL_MS });
+  return json;
 }
 
 export async function getVaultStats() {
@@ -36,9 +48,12 @@ export async function getVaultStats() {
     callReadOnly(config.contracts.vaultCore, "is-paused"),
   ]);
 
+  const rawShares = totalShares?.value?.value ?? totalShares?.value ?? 0;
+  const rawPaused = isPaused?.value?.value ?? isPaused?.value ?? false;
+
   return {
-    totalShares: totalShares?.value || 0,
-    isPaused: isPaused?.value || false,
+    totalShares: Number(rawShares),
+    isPaused: Boolean(rawPaused),
   };
 }
 
@@ -135,7 +150,15 @@ export async function getSharePrice() {
 }
 
 export async function getTotalAssets() {
-  const result = await callReadOnly(config.contracts.vaultCore, "get-total-assets");
+  const result = await callReadOnly(config.contracts.vaultCore, "get-current-total-deposited");
+  const raw = result?.value?.value ?? result?.value ?? 0;
+  return Number(raw);
+}
+
+export async function getTokenBalance(tokenContract: string, user: string) {
+  const result = await callReadOnly(tokenContract, "get-balance", [
+    principalCV(user),
+  ]);
   const raw = result?.value?.value ?? result?.value ?? 0;
   return Number(raw);
 }

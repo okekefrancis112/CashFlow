@@ -1,7 +1,8 @@
 import { Router, Request, Response } from "express";
 import { successResponse, errorResponse } from "../lib/response";
-import { getUserDeposit, getUserShares, getSharePrice } from "../services/stacks";
+import { getUserDeposit, getUserShares, getSharePrice, getTokenBalance } from "../services/stacks";
 import { config } from "../config";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -41,6 +42,7 @@ router.get("/:address/deposits", async (req: Request, res: Response) => {
 
     res.json(successResponse({ address, deposits }));
   } catch (error) {
+    logger.error(error, "Failed to fetch user deposits");
     res.status(500).json(errorResponse("Failed to fetch user deposits", 500));
   }
 });
@@ -66,7 +68,31 @@ router.get("/:address/shares", async (req: Request, res: Response) => {
     const value = Math.floor((shares * sharePrice) / 1000000);
     res.json(successResponse({ address, shares, sharePrice, value }));
   } catch (error) {
+    logger.error(error, "Failed to fetch user shares");
     res.status(500).json(errorResponse("Failed to fetch user shares", 500));
+  }
+});
+
+// GET /user/:address/wallet
+router.get("/:address/wallet", async (req: Request, res: Response) => {
+  const { address } = req.params;
+
+  if (!STACKS_ADDRESS_RE.test(address)) {
+    res.status(400).json(errorResponse("Invalid Stacks address format", 400));
+    return;
+  }
+
+  try {
+    const balances: Record<string, number> = {};
+
+    for (const [asset, contractName] of Object.entries(TOKEN_CONTRACTS)) {
+      balances[asset] = await getTokenBalance(contractName, address);
+    }
+
+    res.json(successResponse({ address, balances }));
+  } catch (error) {
+    logger.error(error, "Failed to fetch wallet balances");
+    res.status(500).json(errorResponse("Failed to fetch wallet balances", 500));
   }
 });
 

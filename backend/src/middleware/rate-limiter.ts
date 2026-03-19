@@ -26,10 +26,10 @@ export const premiumLimiter = rateLimit({
   message: rateLimitMessage("Premium rate limit exceeded, please try again later."),
 });
 
-/** AI endpoints: 5 requests per minute */
+/** AI endpoints: 20 requests per minute (x402 payments provide economic throttling) */
 export const aiLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 5,
+  max: 20,
   standardHeaders: true,
   legacyHeaders: false,
   message: rateLimitMessage("AI rate limit exceeded, please try again later."),

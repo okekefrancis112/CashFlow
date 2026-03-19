@@ -30,8 +30,8 @@ export function YieldsPage({ yields, loading }: YieldsPageProps) {
   return (
     <div className="space-y-6">
       <div className="animate-fade-in-up">
-        <h1 className="text-2xl font-bold text-white">Yield Sources</h1>
-        <p className="text-sm text-[#565a6e] mt-1">Browse all available DeFi yield opportunities on Stacks</p>
+        <h1 className="text-2xl font-bold"><span className="hero-gradient-warm text-glow-warm">Yield Sources</span></h1>
+        <p className="text-sm text-[#565a6e] mt-1">Live APY and TVL across all integrated Stacks DeFi protocols</p>
       </div>
 
       {/* Filters */}

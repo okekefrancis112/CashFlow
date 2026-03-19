@@ -7,6 +7,7 @@ export interface YieldSource {
   risk: "low" | "medium" | "high";
   type: string;
   description: string;
+  apyAvailable?: boolean; // false when APY data couldn't be fetched
 }
 
 export interface StrategyAllocation {

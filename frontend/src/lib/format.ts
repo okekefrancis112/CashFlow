@@ -5,7 +5,8 @@ export function formatUsd(value: number | string): string {
   return `$${num.toFixed(0)}`;
 }
 
-export function formatApy(apy: number): string {
+export function formatApy(apy: number, available?: boolean): string {
+  if (available === false) return "N/A";
   return `${apy.toFixed(1)}%`;
 }
 

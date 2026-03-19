@@ -20,7 +20,7 @@ export function PageLayout({ children }: { children: ReactNode }) {
         <div className="absolute inset-0 dot-grid opacity-40" />
       </div>
 
-      <main id="main-content" className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+      <main id="main-content">
         {children}
       </main>
     </div>

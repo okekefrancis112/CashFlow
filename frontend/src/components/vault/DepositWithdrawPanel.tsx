@@ -5,6 +5,7 @@ import { useWithdraw } from "../../hooks/useWithdraw";
 import { useReportYield } from "../../hooks/useReportYield";
 import { useUserBalance } from "../../hooks/useUserBalance";
 import { useSwap } from "../../hooks/useSwap";
+import { useUsdcxFaucet } from "../../hooks/useUsdcxFaucet";
 import type { TransactionState } from "../../types";
 
 const ASSETS = ["sBTC", "USDCx"] as const;
@@ -62,6 +63,7 @@ export function DepositWithdrawPanel({ isConnected, address, onConnect }: Deposi
   const { reportYield, txId: yieldTxId, txState: yieldState, error: yieldError, reset: resetYield } = useReportYield();
   const { balance, refetch: refetchBalance } = useUserBalance(address);
   const { swap, txState: swapState, txId: swapTxId, error: swapError, reset: resetSwap } = useSwap();
+  const { claimUsdcx, txState: usdcxFaucetState, txId: usdcxFaucetTxId, error: usdcxFaucetError, reset: resetUsdcxFaucet } = useUsdcxFaucet();
 
   const txState = tab === "deposit" ? depositState : withdrawState;
   const txId = tab === "deposit" ? depositTxId : withdrawTxId;
@@ -117,7 +119,16 @@ export function DepositWithdrawPanel({ isConnected, address, onConnect }: Deposi
       {/* User balance */}
       {isConnected && balance && (
         <div className="mb-4 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-          <p className="text-[11px] font-medium text-[#565a6e] uppercase tracking-wider mb-2">Your Balances</p>
+          <p className="text-[11px] font-medium text-[#565a6e] uppercase tracking-wider mb-2">Wallet Balance</p>
+          <div className="flex justify-between text-xs">
+            <span className="text-[#8b8fa3]">sBTC</span>
+            <span className="text-white font-medium">{((Number(balance.wallet?.sBTC) || 0) / 1_000_000).toFixed(6)}</span>
+          </div>
+          <div className="flex justify-between text-xs mt-1">
+            <span className="text-[#8b8fa3]">USDCx</span>
+            <span className="text-white font-medium">{((Number(balance.wallet?.USDCx) || 0) / 1_000_000).toFixed(6)}</span>
+          </div>
+          <p className="text-[11px] font-medium text-[#565a6e] uppercase tracking-wider mt-3 mb-2">Vault Deposits</p>
           <div className="flex justify-between text-xs">
             <span className="text-[#8b8fa3]">sBTC</span>
             <span className="text-white font-medium">{((Number(balance.deposits.sBTC) || 0) / 1_000_000).toFixed(6)}</span>
@@ -143,13 +154,13 @@ export function DepositWithdrawPanel({ isConnected, address, onConnect }: Deposi
         </div>
       )}
 
-      {/* Testnet faucet: swap STX for sBTC */}
+      {/* Testnet faucet: claim sBTC and USDCx */}
       {isConnected && (
-        <div className="mb-4">
+        <div className="mb-4 space-y-2">
           <button
             onClick={async () => {
               resetSwap();
-              await swap(10); // 10 STX -> 0.1 sBTC
+              await swap();
               for (const delay of [3000, 8000, 15000, 30000]) {
                 setTimeout(refetchBalance, delay);
               }
@@ -158,11 +169,29 @@ export function DepositWithdrawPanel({ isConnected, address, onConnect }: Deposi
             className="w-full py-2 rounded-lg text-[11px] font-medium bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 transition-all duration-200 disabled:opacity-40"
           >
             {swapState === "signing" || swapState === "pending"
-              ? "Swapping..."
-              : "Get Test sBTC (swap 10 STX for 0.1 sBTC)"}
+              ? "Claiming..."
+              : "Get Test sBTC (claim 10 sBTC)"}
           </button>
           <TxStatusBadge state={swapState} txId={swapTxId} />
           {swapError && <p className="text-xs text-red-400 mt-1 text-center">{swapError}</p>}
+
+          <button
+            onClick={async () => {
+              resetUsdcxFaucet();
+              await claimUsdcx();
+              for (const delay of [3000, 8000, 15000, 30000]) {
+                setTimeout(refetchBalance, delay);
+              }
+            }}
+            disabled={usdcxFaucetState === "signing" || usdcxFaucetState === "pending"}
+            className="w-full py-2 rounded-lg text-[11px] font-medium bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 transition-all duration-200 disabled:opacity-40"
+          >
+            {usdcxFaucetState === "signing" || usdcxFaucetState === "pending"
+              ? "Claiming..."
+              : "Get Test USDCx (claim 10,000 USDCx)"}
+          </button>
+          <TxStatusBadge state={usdcxFaucetState} txId={usdcxFaucetTxId} />
+          {usdcxFaucetError && <p className="text-xs text-red-400 mt-1 text-center">{usdcxFaucetError}</p>}
         </div>
       )}
 
@@ -171,7 +200,7 @@ export function DepositWithdrawPanel({ isConnected, address, onConnect }: Deposi
         <div className="mb-4 p-3 rounded-xl bg-emerald-500/[0.04] border border-emerald-500/10">
           <p className="text-[11px] font-medium text-emerald-400/70 uppercase tracking-wider mb-2">Report Yield (Owner)</p>
           <p className="text-[10px] text-[#565a6e] mb-2">
-            Simulate strategy returns. Increases share price for all depositors. 10% performance fee is deducted.
+            Simulate harvested yield from strategies. Share price increases for all depositors. 10% performance fee auto-collected.
           </p>
           <div className="flex gap-2">
             <input
@@ -289,7 +318,7 @@ export function DepositWithdrawPanel({ isConnected, address, onConnect }: Deposi
 
       {txState === "idle" && (
         <p className="text-[11px] text-[#3a3e52] mt-3 text-center">
-          {tab === "deposit" ? "You'll receive cfYIELD share tokens" : "Burn cfYIELD shares to withdraw"}
+          {tab === "deposit" ? "You'll receive cfYIELD share tokens — SIP-010 composable across Stacks DeFi" : "Burn cfYIELD shares to redeem your proportional vault assets"}
         </p>
       )}
     </div>

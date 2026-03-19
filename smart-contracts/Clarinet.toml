@@ -10,6 +10,11 @@ path = 'contracts/sbtc-token.clar'
 clarity_version = 3
 epoch = '3.2'
 
+[contracts.usdcx-token]
+path = 'contracts/usdcx-token.clar'
+clarity_version = 3
+epoch = '3.2'
+
 [contracts.sbtc-swap]
 path = 'contracts/sbtc-swap.clar'
 clarity_version = 3
@@ -57,6 +62,16 @@ epoch = '3.2'
 
 [contracts.stackingdao-adapter]
 path = 'contracts/adapters/stackingdao-adapter.clar'
+clarity_version = 3
+epoch = '3.2'
+
+[contracts.bitflow-adapter]
+path = 'contracts/adapters/bitflow-adapter.clar'
+clarity_version = 3
+epoch = '3.2'
+
+[contracts.hermetica-adapter]
+path = 'contracts/adapters/hermetica-adapter.clar'
 clarity_version = 3
 epoch = '3.2'
 

@@ -142,13 +142,13 @@ function checkCircuitBreakers() {
   );
 }
 
-function recordApySnapshots() {
-  const sources = fetchYieldSources();
+async function recordApySnapshots() {
+  const sources = await fetchYieldSources();
   for (const source of sources) {
     recordApySnapshot(source.protocol, source.apy);
   }
 
-  const allocations = getCurrentAllocations();
+  const allocations = await getCurrentAllocations();
   const weightedApy = getWeightedApy(allocations);
   recordApySnapshot("CashFlow Weighted", weightedApy);
 
@@ -165,7 +165,7 @@ export async function runMonitorCheck() {
     checkSharePrice(),
   ]);
   checkCircuitBreakers();
-  recordApySnapshots();
+  await recordApySnapshots();
 }
 
 export function startMonitor(intervalMs = 90 * 1000) {

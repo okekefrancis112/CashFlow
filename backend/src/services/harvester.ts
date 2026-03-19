@@ -9,7 +9,6 @@ import { config } from "../config";
 import { logger } from "../lib/logger";
 import { getNetwork, callReadOnly } from "./stacks";
 import { recordHarvest, recordFee } from "./database";
-import { fetchYieldSources } from "./yield-monitor";
 
 interface AdapterConfig {
   name: string;
@@ -18,12 +17,14 @@ interface AdapterConfig {
   paused: boolean;
 }
 
-const ADAPTERS: AdapterConfig[] = [
-  { name: "Zest", contractName: "zest-adapter", consecutiveFailures: 0, paused: false },
-  { name: "StackingDAO", contractName: "stackingdao-adapter", consecutiveFailures: 0, paused: false },
-  { name: "Bitflow", contractName: "bitflow-adapter", consecutiveFailures: 0, paused: false },
-  { name: "Hermetica", contractName: "hermetica-adapter", consecutiveFailures: 0, paused: false },
-];
+const ADAPTERS: AdapterConfig[] = Object.entries(config.contracts.adapters).map(
+  ([name, contractName]) => ({
+    name,
+    contractName,
+    consecutiveFailures: 0,
+    paused: false,
+  })
+);
 
 const MAX_CONSECUTIVE_FAILURES = 3;
 const PERFORMANCE_FEE_BPS = 1000; // 10%
@@ -74,48 +75,13 @@ async function harvestAdapter(adapter: AdapterConfig): Promise<number> {
         recordHarvest(adapter.name, yieldAmount, broadcastResult.txid);
         return yieldAmount;
       } catch {
-        // Adapter contracts not deployed yet, fall through to simulation
-        logger.debug({ adapter: adapter.name }, "On-chain harvest unavailable, using simulation");
+        logger.debug({ adapter: adapter.name }, "On-chain harvest unavailable");
       }
     }
 
-    // Simulation mode: generate realistic yield based on yield-monitor data
-    const sources = fetchYieldSources();
-    const matchingSource = sources.find((s) =>
-      s.protocol.toLowerCase().includes(adapter.name.toLowerCase())
-    );
-
-    if (!matchingSource) {
-      adapter.consecutiveFailures = 0;
-      return 0;
-    }
-
-    // Simulate yield: APY / 365 * TVL allocation * random factor
-    const dailyRate = matchingSource.apy / 100 / 365;
-    const simulatedTvlAllocation = 500_000 + Math.random() * 200_000;
-    const baseYield = Math.floor(dailyRate * simulatedTvlAllocation);
-    const yieldAmount = Math.max(100, baseYield + Math.floor((Math.random() - 0.3) * baseYield * 0.5));
-
-    // Simulate fee collection
-    const feeAmount = Math.floor((yieldAmount * PERFORMANCE_FEE_BPS) / 10000);
-    const netYield = yieldAmount - feeAmount;
-
-    const simTxId = `sim-harvest-${adapter.name.toLowerCase()}-${Date.now().toString(36)}`;
-
-    recordHarvest(adapter.name, netYield, simTxId);
-    recordFee(feeAmount, yieldAmount);
-
-    logger.info({
-      adapter: adapter.name,
-      grossYield: yieldAmount,
-      fee: feeAmount,
-      netYield,
-      txId: simTxId,
-      mode: "simulation",
-    }, "Simulated harvest completed");
-
+    // No on-chain harvest available — nothing to harvest
     adapter.consecutiveFailures = 0;
-    return netYield;
+    return 0;
   } catch (error) {
     adapter.consecutiveFailures++;
     logger.error({

@@ -74,7 +74,7 @@ export function YieldTable({ yields, compact = false }: YieldTableProps) {
               >
                 <td className="py-3.5 font-medium text-white text-[13px]">{y.protocol}</td>
                 <td className="py-3.5 text-[#8b8fa3] text-[13px]">{y.asset}</td>
-                <td className="py-3.5 text-right font-semibold text-emerald-400 text-[13px]">{formatApy(y.apy)}</td>
+                <td className={cn("py-3.5 text-right font-semibold text-[13px]", y.apyAvailable === false ? "text-[#565a6e] italic" : "text-emerald-400")}>{formatApy(y.apy, y.apyAvailable)}</td>
                 <td className="py-3.5 text-right text-[#8b8fa3] text-[13px]">{formatUsd(y.tvl)}</td>
                 <td className="py-3.5 text-right"><RiskBadge risk={y.risk} /></td>
               </tr>

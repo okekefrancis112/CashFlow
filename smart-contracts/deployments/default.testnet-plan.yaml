@@ -30,6 +30,13 @@ plan:
             anchor-block-only: true
             clarity-version: 3
         - contract-publish:
+            contract-name: usdcx-token
+            expected-sender: ST2211JFW8MMPR3ZKDH4303QMZ5WCHZ2NFG1W53YD
+            cost: 289723
+            path: contracts/usdcx-token.clar
+            anchor-block-only: true
+            clarity-version: 3
+        - contract-publish:
             contract-name: sbtc-swap
             expected-sender: ST2211JFW8MMPR3ZKDH4303QMZ5WCHZ2NFG1W53YD
             cost: 289723
@@ -83,6 +90,20 @@ plan:
             expected-sender: ST2211JFW8MMPR3ZKDH4303QMZ5WCHZ2NFG1W53YD
             cost: 289913
             path: contracts/adapters/zest-adapter.clar
+            anchor-block-only: true
+            clarity-version: 3
+        - contract-publish:
+            contract-name: bitflow-adapter
+            expected-sender: ST2211JFW8MMPR3ZKDH4303QMZ5WCHZ2NFG1W53YD
+            cost: 289913
+            path: contracts/adapters/bitflow-adapter.clar
+            anchor-block-only: true
+            clarity-version: 3
+        - contract-publish:
+            contract-name: hermetica-adapter
+            expected-sender: ST2211JFW8MMPR3ZKDH4303QMZ5WCHZ2NFG1W53YD
+            cost: 289913
+            path: contracts/adapters/hermetica-adapter.clar
             anchor-block-only: true
             clarity-version: 3
       epoch: "3.2"

@@ -17,9 +17,9 @@ if (missing.length > 0) {
   );
 }
 
-if (!process.env.OPENAI_API_KEY) {
+if (!process.env.GROQ_API_KEY && !process.env.XAI_API_KEY && !process.env.OPENAI_API_KEY) {
   logger.warn(
-    "OPENAI_API_KEY is not set. AI yield optimization will use deterministic fallback."
+    "No AI API key set (GROQ_API_KEY, XAI_API_KEY, or OPENAI_API_KEY). AI yield optimization will use deterministic fallback."
   );
 }
 
@@ -32,7 +32,18 @@ export const config = {
     process.env.WALLET_ADDRESS ||
     "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM",
   privateKey: process.env.PRIVATE_KEY || "",
-  openaiApiKey: process.env.OPENAI_API_KEY || "",
+  // AI provider priority: Groq > xAI Grok > OpenAI
+  aiApiKey: process.env.GROQ_API_KEY || process.env.XAI_API_KEY || process.env.OPENAI_API_KEY || "",
+  aiBaseUrl: process.env.GROQ_API_KEY
+    ? "https://api.groq.com/openai/v1"
+    : process.env.XAI_API_KEY
+      ? "https://api.x.ai/v1"
+      : "https://api.openai.com/v1",
+  aiModel: process.env.GROQ_API_KEY
+    ? "llama-3.3-70b-versatile"
+    : process.env.XAI_API_KEY
+      ? "grok-3-mini"
+      : "gpt-4o-mini",
   x402FacilitatorUrl:
     process.env.X402_FACILITATOR_URL || "https://x402.aibtc.dev",
   paymentAddress:
@@ -52,5 +63,11 @@ export const config = {
     strategyRouter: "strategy-router",
     yieldToken: "yield-token",
     feeCollector: "fee-collector",
+    adapters: {
+      Zest: "zest-adapter",
+      StackingDAO: "stackingdao-adapter",
+      Bitflow: "bitflow-adapter",
+      Hermetica: "hermetica-adapter",
+    },
   },
 };

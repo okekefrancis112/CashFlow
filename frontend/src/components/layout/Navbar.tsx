@@ -12,7 +12,7 @@ const NAV_LINKS = [
   { to: "/dashboard", label: "Dashboard" },
   { to: "/yields", label: "Yields" },
   { to: "/analytics", label: "Analytics" },
-  { to: "/premium", label: "AI API" },
+  { to: "/ai", label: "AI API" },
 ];
 
 interface NavbarProps {
@@ -48,7 +48,7 @@ export function Navbar({ walletAddress, isConnected, onConnect, onDisconnect }: 
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2.5 group">
             <Logo size={30} />
-            <span className="text-[17px] font-bold text-white tracking-tight group-hover:text-blue-400 transition-colors duration-200">
+            <span className="text-[17px] font-bold text-white tracking-tight group-hover:text-orange-400 transition-colors duration-200">
               CashFlow
             </span>
           </Link>

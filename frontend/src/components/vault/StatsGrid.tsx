@@ -14,14 +14,14 @@ export function StatsGrid({ vaultStats, weightedApy }: StatsGridProps) {
       <StatCard
         label="Total Value Locked"
         value={formatUsd(vaultStats?.tvl || 0)}
-        sub="Across all strategies"
+        sub="Pooled across all yield strategies"
         icon={<DollarSign className="w-4 h-4" />}
         className="animate-fade-in-up"
       />
       <StatCard
         label="Weighted APY"
         value={`${(Number(weightedApy) || 0).toFixed(1)}%`}
-        sub="AI-optimized allocation"
+        sub="Blended rate across protocols"
         icon={<TrendingUp className="w-4 h-4" />}
         className="animate-fade-in-up delay-100"
         highlight
@@ -29,14 +29,14 @@ export function StatsGrid({ vaultStats, weightedApy }: StatsGridProps) {
       <StatCard
         label="Active Strategies"
         value={`${vaultStats?.activeStrategies || 0}`}
-        sub="DeFi protocols"
+        sub="Lending, LP, stacking & vaults"
         icon={<Layers className="w-4 h-4" />}
         className="animate-fade-in-up delay-200"
       />
       <StatCard
         label="Share Price"
         value={`${((Number(vaultStats?.sharePrice) || 1000000) / 1000000).toFixed(4)}`}
-        sub="cfYIELD per token"
+        sub="cfYIELD value (grows with yield)"
         icon={<Coins className="w-4 h-4" />}
         className="animate-fade-in-up delay-300"
       />

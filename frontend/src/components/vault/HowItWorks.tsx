@@ -1,10 +1,10 @@
 import { ArrowDownToLine, Brain, TrendingUp, ArrowUpFromLine } from "lucide-react";
 
 const STEPS = [
-  { icon: ArrowDownToLine, title: "Deposit", desc: "Deposit sBTC or USDCx into the vault" },
-  { icon: Brain, title: "AI Optimizes", desc: "AI agent allocates across 5+ DeFi protocols" },
-  { icon: TrendingUp, title: "Earn Yield", desc: "Auto-compounded Bitcoin-native yield" },
-  { icon: ArrowUpFromLine, title: "Withdraw", desc: "Withdraw anytime by burning cfYIELD shares" },
+  { icon: ArrowDownToLine, title: "Deposit", desc: "Send sBTC or USDCx to the vault and receive cfYIELD share tokens" },
+  { icon: Brain, title: "AI Allocates", desc: "GPT-4o-mini distributes capital across Zest, Bitflow, StackingDAO & Hermetica" },
+  { icon: TrendingUp, title: "Auto-Compound", desc: "Harvested yields are reinvested — your shares appreciate over time" },
+  { icon: ArrowUpFromLine, title: "Withdraw", desc: "Burn cfYIELD shares anytime to redeem your proportional vault assets" },
 ];
 
 export function HowItWorks() {

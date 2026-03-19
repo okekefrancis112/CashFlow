@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import axios from "axios";
+import { paymentMiddleware, STXtoMicroSTX } from "x402-stacks";
 import { config } from "../config";
 import { logger } from "../lib/logger";
 import { successResponse, errorResponse } from "../lib/response";
@@ -12,12 +13,19 @@ import {
 import {
   getVaultStats,
   getAllStrategies,
-  getPerformanceFeeBps,
   getSharePrice,
   getTotalAssets,
 } from "../services/stacks";
 import { analyzeYields, generateForecast } from "../agents/yield-optimizer";
 import { validateRiskParam } from "../middleware/validation";
+import { getApyHistory, getTvlHistory, getRebalanceHistory } from "../services/database";
+
+const x402Config = {
+  amount: STXtoMicroSTX(0.001),
+  payTo: config.paymentAddress,
+  network: config.stacksNetwork as "testnet" | "mainnet",
+  facilitatorUrl: config.x402FacilitatorUrl,
+};
 
 const router = Router();
 
@@ -41,7 +49,7 @@ router.get("/health", async (_req: Request, res: Response) => {
   }
 
   // Check OpenAI availability (don't disclose key presence)
-  checks.ai = config.openaiApiKey ? "ok" : "degraded";
+  checks.ai = config.aiApiKey ? "ok" : "degraded";
 
   const values = Object.values(checks);
   const allOk = values.every((v) => v === "ok");
@@ -61,17 +69,16 @@ router.get("/health", async (_req: Request, res: Response) => {
 });
 
 // Current yield sources across Stacks DeFi
-router.get("/yields", (_req: Request, res: Response) => {
-  const sources = fetchYieldSources();
+router.get("/yields", async (_req: Request, res: Response) => {
+  const sources = await fetchYieldSources();
   res.json(
     successResponse({
       sources,
       count: sources.length,
       averageApy:
         Math.round(
-          (sources.reduce((s, src) => s + src.apy, 0) / sources.length) * 100
+          (sources.reduce((s, src) => s + src.apy, 0) / Math.max(sources.length, 1)) * 100
         ) / 100,
-      isMock: true, // Static data with jitter until protocol APIs are integrated (Phase 2)
     })
   );
 });
@@ -87,24 +94,23 @@ router.get("/vault/stats", async (_req: Request, res: Response) => {
     ]);
 
     const activeStrategies = strategies.filter((s) => s.isActive);
-    const allocations = getCurrentAllocations();
+    const allocations = await getCurrentAllocations();
     const weightedApy = getWeightedApy(allocations);
 
     res.json(
       successResponse({
-        tvl: totalAssets,
+        tvl: totalAssets / 1_000_000,
         totalShares: vaultStats.totalShares,
         sharePrice,
         weightedApy,
         activeStrategies: activeStrategies.length,
         supportedAssets: ["sBTC", "USDCx"],
         isPaused: vaultStats.isPaused,
-        isMock: false,
       })
     );
   } catch (error) {
-    logger.warn("Failed to fetch on-chain vault stats, falling back to mock data");
-    const allocations = getCurrentAllocations();
+    logger.warn("Failed to fetch on-chain vault stats, using fallback data");
+    const allocations = await getCurrentAllocations();
     const weightedApy = getWeightedApy(allocations);
 
     res.json(
@@ -115,24 +121,23 @@ router.get("/vault/stats", async (_req: Request, res: Response) => {
         activeStrategies: allocations.length,
         supportedAssets: ["sBTC", "USDCx"],
         isPaused: false,
-        isMock: true,
       })
     );
   }
 });
 
-// Current strategy allocation
+// Current strategy allocation — powered by AI optimizer
 router.get("/strategy/current", async (_req: Request, res: Response) => {
   try {
-    const strategies = await getAllStrategies();
-    const activeStrategies = strategies.filter((s) => s.isActive);
+    const sources = await fetchYieldSources();
+    const optimization = await analyzeYields(sources, "balanced");
 
-    const allocations = activeStrategies.map((s) => ({
-      sourceId: s.name.toLowerCase().replace(/\s+/g, "-"),
-      protocol: s.name,
-      asset: "",
-      allocationBps: s.allocationBps,
-      currentApy: 0, // Real APY requires protocol API integration (Phase 2)
+    const allocations = optimization.allocations.map((a) => ({
+      sourceId: a.sourceId,
+      protocol: a.protocol,
+      asset: a.asset,
+      allocationBps: a.recommendedBps,
+      currentApy: a.expectedApy,
     }));
 
     const totalAllocationBps = allocations.reduce(
@@ -144,15 +149,16 @@ router.get("/strategy/current", async (_req: Request, res: Response) => {
       successResponse({
         allocations,
         totalAllocationBps,
-        weightedApy: 0,
+        weightedApy: optimization.weightedApy,
+        reasoning: optimization.reasoning,
+        riskScore: optimization.riskScore,
         lastRebalance: new Date(Date.now() - 3600000).toISOString(),
         nextRebalance: new Date(Date.now() + 3600000).toISOString(),
-        isMock: false,
       })
     );
   } catch (error) {
-    logger.warn("Failed to fetch on-chain strategies, falling back to mock data");
-    const allocations = getCurrentAllocations();
+    logger.warn("AI optimizer failed, using yield-monitor fallback");
+    const allocations = await getCurrentAllocations();
     const weightedApy = getWeightedApy(allocations);
 
     res.json(
@@ -165,7 +171,6 @@ router.get("/strategy/current", async (_req: Request, res: Response) => {
         weightedApy,
         lastRebalance: new Date(Date.now() - 3600000).toISOString(),
         nextRebalance: new Date(Date.now() + 3600000).toISOString(),
-        isMock: true,
       })
     );
   }
@@ -177,11 +182,12 @@ router.get("/strategy/current", async (_req: Request, res: Response) => {
 
 // AI yield forecast for next 7 days
 router.get(
-  "/premium/yield-forecast",
+  "/ai/yield-forecast",
   aiLimiter,
+  paymentMiddleware({ ...x402Config, description: "AI yield forecast — 7-day projections" }),
   async (_req: Request, res: Response) => {
     try {
-      const sources = fetchYieldSources();
+      const sources = await fetchYieldSources();
       const forecast = await generateForecast(sources);
 
       res.json(successResponse(forecast));
@@ -194,15 +200,16 @@ router.get(
 
 // Real-time optimal allocation signals with AI reasoning
 router.get(
-  "/premium/strategy-signals",
+  "/ai/strategy-signals",
   aiLimiter,
+  paymentMiddleware({ ...x402Config, description: "AI strategy signals — risk-adjusted allocation" }),
   validateRiskParam,
   async (req: Request, res: Response) => {
     try {
       const riskProfile =
         (req.query.risk as "conservative" | "balanced" | "aggressive") ||
         "balanced";
-      const sources = fetchYieldSources();
+      const sources = await fetchYieldSources();
       const optimization = await analyzeYields(sources, riskProfile);
 
       res.json(successResponse(optimization));
@@ -215,46 +222,133 @@ router.get(
 
 // Detailed historical performance analytics
 router.get(
-  "/premium/portfolio-analytics",
+  "/ai/portfolio-analytics",
   aiLimiter,
+  paymentMiddleware({ ...x402Config, description: "Portfolio analytics — 30-day performance & risk metrics" }),
   async (_req: Request, res: Response) => {
     try {
-      const allocations = getCurrentAllocations();
+      const allocations = await getCurrentAllocations();
       const weightedApy = getWeightedApy(allocations);
+      const sources = await fetchYieldSources();
 
-      // Simulated historical data
-      const history = Array.from({ length: 30 }, (_, i) => ({
-        date: new Date(Date.now() - (29 - i) * 86400000)
-          .toISOString()
-          .split("T")[0],
-        tvl: Math.round(2_000_000 + Math.random() * 500_000),
-        apy: Math.round((weightedApy + (Math.random() - 0.5) * 3) * 100) / 100,
-        rebalanceCount: Math.random() > 0.7 ? 1 : 0,
-      }));
+      // --- Build history from real database snapshots ---
+      const apySnaps = getApyHistory(30);
+      const tvlSnaps = getTvlHistory(30);
+      const rebalanceLogs = getRebalanceHistory(200);
 
-      const totalRebalances = history.reduce(
-        (s, h) => s + h.rebalanceCount,
-        0
-      );
+      // Group weighted APY snapshots by date
+      const apyByDate = new Map<string, number[]>();
+      for (const snap of apySnaps) {
+        if (snap.protocol !== "CashFlow Weighted") continue;
+        const date = snap.timestamp.split("T")[0];
+        const arr = apyByDate.get(date) || [];
+        arr.push(snap.apy);
+        apyByDate.set(date, arr);
+      }
+
+      // Group TVL snapshots by date
+      const tvlByDate = new Map<string, number[]>();
+      for (const snap of tvlSnaps) {
+        const date = snap.timestamp.split("T")[0];
+        const arr = tvlByDate.get(date) || [];
+        arr.push(snap.totalAssets);
+        tvlByDate.set(date, arr);
+      }
+
+      // Count rebalances by date
+      const rebalancesByDate = new Map<string, number>();
+      for (const log of rebalanceLogs) {
+        const date = log.timestamp.split("T")[0];
+        rebalancesByDate.set(date, (rebalancesByDate.get(date) || 0) + 1);
+      }
+
+      // Build 30-day history from real data
+      const history: { date: string; tvl: number; apy: number; rebalanceCount: number }[] = [];
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date(Date.now() - i * 86400000).toISOString().split("T")[0];
+        const dayApys = apyByDate.get(date);
+        const dayTvls = tvlByDate.get(date);
+        history.push({
+          date,
+          tvl: dayTvls && dayTvls.length > 0
+            ? Math.round(dayTvls.reduce((s, v) => s + v, 0) / dayTvls.length)
+            : 0,
+          apy: dayApys && dayApys.length > 0
+            ? Math.round((dayApys.reduce((s, v) => s + v, 0) / dayApys.length) * 100) / 100
+            : 0,
+          rebalanceCount: rebalancesByDate.get(date) || 0,
+        });
+      }
+
+      const totalRebalances = history.reduce((s, h) => s + h.rebalanceCount, 0);
+      const daysWithApy = history.filter((h) => h.apy > 0);
+      const thirtyDayAvgApy = daysWithApy.length > 0
+        ? Math.round((daysWithApy.reduce((s, h) => s + h.apy, 0) / daysWithApy.length) * 100) / 100
+        : weightedApy;
+
+      // Derive top-performing strategy from current yield data
+      const availableSources = sources.filter((s) => s.apyAvailable !== false);
+      const topSource = availableSources.length > 0
+        ? availableSources.reduce((best, s) => (s.apy > best.apy ? s : best), availableSources[0])
+        : sources[0];
+
+      // Compute risk metrics from TVL snapshots (actual value changes, not APY noise)
+      // Max drawdown = largest peak-to-trough decline in portfolio value
+      const weightedSnaps = apySnaps.filter((s) => s.protocol === "CashFlow Weighted");
+      const snapApyValues = weightedSnaps.map((s) => s.apy);
+      const avgApy = snapApyValues.length > 0
+        ? snapApyValues.reduce((s, v) => s + v, 0) / snapApyValues.length
+        : weightedApy;
+
+      // Volatility: standard deviation of daily APY readings (use daily aggregates to avoid intra-day noise)
+      const dailyApyValues = daysWithApy.length > 0 ? daysWithApy.map((h) => h.apy) : snapApyValues;
+      const dailyAvg = dailyApyValues.length > 0
+        ? dailyApyValues.reduce((s, v) => s + v, 0) / dailyApyValues.length
+        : 0;
+      const variance = dailyApyValues.length > 1
+        ? dailyApyValues.reduce((s, v) => s + Math.pow(v - dailyAvg, 2), 0) / (dailyApyValues.length - 1)
+        : 0;
+      const volatility = Math.round(Math.sqrt(variance) * 100) / 100;
+
+      // Max drawdown: percentage decline from peak APY to lowest subsequent APY
+      // Uses daily aggregated APY (not TVL, which can be 0 when contracts aren't deployed)
+      let maxDrawdown = 0;
+      if (dailyApyValues.length > 1) {
+        let peak = dailyApyValues[0];
+        for (const val of dailyApyValues) {
+          if (val > peak) peak = val;
+          if (peak > 0) {
+            const dd = ((val - peak) / peak) * 100;
+            if (dd < maxDrawdown) maxDrawdown = dd;
+          }
+        }
+        maxDrawdown = Math.round(maxDrawdown * 100) / 100;
+      }
+
+      // Sharpe ratio: (avg APY - risk-free rate) / volatility, using 4% as risk-free baseline
+      const riskFreeRate = 4;
+      const sharpeRatio = volatility > 0
+        ? Math.round(((dailyAvg - riskFreeRate) / volatility) * 100) / 100
+        : 0;
+
+      const daysTracked = daysWithApy.length;
 
       res.json(
         successResponse({
           currentApy: weightedApy,
-          thirtyDayAvgApy:
-            Math.round(
-              (history.reduce((s, h) => s + h.apy, 0) / history.length) * 100
-            ) / 100,
+          thirtyDayAvgApy,
           totalRebalances,
+          daysTracked,
           history,
           topPerformingStrategy: {
-            protocol: "Hermetica",
-            asset: "hBTC",
-            apy: 15.3,
+            protocol: topSource.protocol,
+            asset: topSource.asset,
+            apy: topSource.apy,
           },
           riskMetrics: {
-            sharpeRatio: 2.4,
-            maxDrawdown: -3.2,
-            volatility: 4.1,
+            sharpeRatio,
+            maxDrawdown,
+            volatility,
           },
         })
       );

@@ -10,7 +10,6 @@ interface VaultData {
   weightedApy: number;
   loading: boolean;
   error: string | null;
-  isMockData: boolean;
   refetch: () => void;
 }
 
@@ -21,8 +20,6 @@ export function useVaultData(pollInterval = 30000): VaultData {
   const [weightedApy, setWeightedApy] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isMockData, setIsMockData] = useState(false);
-
   const fetchData = useCallback(async () => {
     try {
       const [yieldRes, statsRes, strategyRes] = await Promise.all([
@@ -39,13 +36,11 @@ export function useVaultData(pollInterval = 30000): VaultData {
       setVaultStats(statsData);
       setAllocations(strategyData.allocations ?? []);
       setWeightedApy(strategyData.weightedApy ?? 0);
-      setIsMockData(!!statsData.isMock);
       setError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fetch vault data";
       setError(message);
-      setIsMockData(true);
-      // Fallback to mock data so UI isn't empty
+      // Fallback data so UI isn't empty
       setVaultStats(MOCK_VAULT_STATS);
       setYields(MOCK_YIELDS);
       setAllocations(MOCK_ALLOCATIONS);
@@ -61,5 +56,5 @@ export function useVaultData(pollInterval = 30000): VaultData {
     return () => clearInterval(interval);
   }, [fetchData, pollInterval]);
 
-  return { vaultStats, yields, allocations, weightedApy, loading, error, isMockData, refetch: fetchData };
+  return { vaultStats, yields, allocations, weightedApy, loading, error, refetch: fetchData };
 }

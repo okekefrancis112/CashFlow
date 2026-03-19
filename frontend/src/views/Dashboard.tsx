@@ -2,6 +2,7 @@ import { StatsGrid } from "../components/vault/StatsGrid";
 import { DepositWithdrawPanel } from "../components/vault/DepositWithdrawPanel";
 import { HowItWorks } from "../components/vault/HowItWorks";
 import { StrategyPanel } from "../components/strategy/StrategyPanel";
+import { InvestmentPanel } from "../components/strategy/InvestmentPanel";
 import { YieldTable } from "../components/yields/YieldTable";
 import { PremiumSection } from "../components/premium/PremiumSection";
 import { CardSkeleton } from "../components/common/LoadingSkeleton";
@@ -43,8 +44,8 @@ export function Dashboard({
   return (
     <div className="space-y-8">
       <div className="animate-fade-in-up">
-        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-        <p className="text-sm text-[#565a6e] mt-1">Overview of your vault performance and strategies</p>
+        <h1 className="text-2xl font-bold"><span className="hero-gradient-warm text-glow-warm">Dashboard</span></h1>
+        <p className="text-sm text-[#565a6e] mt-1">Your vault position, AI strategy allocation, and live yield sources</p>
       </div>
 
       <StatsGrid vaultStats={vaultStats} weightedApy={weightedApy} />
@@ -64,6 +65,9 @@ export function Dashboard({
             <StrategyPanel allocations={allocations} />
           </div>
           <div className="animate-fade-in-right delay-500">
+            <InvestmentPanel />
+          </div>
+          <div className="animate-fade-in-right delay-600">
             <YieldTable yields={yields} />
           </div>
         </div>

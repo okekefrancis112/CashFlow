@@ -3,6 +3,7 @@ import { api } from "../lib/api";
 
 interface UserBalance {
   deposits: { sBTC: number; USDCx: number };
+  wallet: { sBTC: number; USDCx: number };
   shares: number;
   sharePrice: number;  // PRECISION units (1000000 = 1.0)
   shareValue: number;  // shares * price in micro-tokens
@@ -26,14 +27,17 @@ export function useUserBalance(address: string | null): UseUserBalanceResult {
 
     setLoading(true);
     try {
-      const [depositsRes, sharesRes] = await Promise.all([
+      const [depositsRes, sharesRes, walletRes] = await Promise.all([
         api.get(`/user/${address}/deposits`),
         api.get(`/user/${address}/shares`),
+        api.get(`/user/${address}/wallet`),
       ]);
 
       const sharesData = sharesRes.data?.data;
+      const walletData = walletRes.data?.data?.balances ?? { sBTC: 0, USDCx: 0 };
       setBalance({
         deposits: depositsRes.data?.data?.deposits ?? { sBTC: 0, USDCx: 0 },
+        wallet: walletData,
         shares: sharesData?.shares ?? 0,
         sharePrice: sharesData?.sharePrice ?? 1000000,
         shareValue: sharesData?.value ?? sharesData?.shares ?? 0,
